@@ -1,0 +1,9 @@
+opencv-python
+numpy
+scipy
+matplotlib
+scikit-learn
+pandas
+mediapipe>=0.10.0,<0.11.0
+pillow
+streamlit
