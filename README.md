@@ -26,7 +26,7 @@ From Window terminal
 
 step1. Click Right Button => 터미널에서 열기로 Power Shell Terminal Open
 
-step2. Power Shell Terminal 에서 Clone the repository "clone https://github.com/leekwansoo/golf-coach.git"
+step2. Power Shell Terminal 에서 Clone the repository "git clone https://github.com/leekwansoo/golf-coach.git"
 
 a new folder will be downloaded on the desktop window terminal
 
