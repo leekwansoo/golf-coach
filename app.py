@@ -92,127 +92,139 @@ def render_result_panel(title: str, result: dict, key_prefix: str) -> None:
 
 
 def render_synced_dual_player(left_video_path: Path, right_video_path: Path) -> None:
-        left_b64 = base64.b64encode(left_video_path.read_bytes()).decode("utf-8")
-        right_b64 = base64.b64encode(right_video_path.read_bytes()).decode("utf-8")
+    left_b64 = base64.b64encode(left_video_path.read_bytes()).decode("utf-8")
+    right_b64 = base64.b64encode(right_video_path.read_bytes()).decode("utf-8")
 
-        html = f"""
-        <div style=\"padding:8px;border:1px solid #ddd;border-radius:10px;background:#fafafa;\">
-                <div style="display:flex;flex-wrap:wrap;gap:10px;margin-bottom:10px;justify-content:center;">
-                    <button id="syncBtn" style="padding:8px 14px;cursor:pointer;">Sync</button>
-                    <button id="startBtn" style="padding:8px 14px;cursor:pointer;">Start</button>
-                    <button id="stopBtn" style="padding:8px 14px;cursor:pointer;">Pause</button>
-                    <button id="repeatBtn" style="padding:8px 14px;cursor:pointer;">Repeat: Off</button>
-                    <button id="speed25Btn" style="padding:8px 14px;cursor:pointer;">25%</button>
-                    <button id="speed50Btn" style="padding:8px 14px;cursor:pointer;">50%</button>
-                    <button id="speed75Btn" style="padding:8px 14px;cursor:pointer;">75%</button>
-                    <button id="speed100Btn" style="padding:8px 14px;cursor:pointer;">100%</button>
-                </div>
+    html = f"""
+    <div style="padding:8px;border:1px solid #ddd;border-radius:10px;background:#fafafa;box-sizing:border-box;">
+        <div style="display:flex;flex-wrap:wrap;gap:10px;margin-bottom:10px;justify-content:center;">
+            <button id="syncBtn" style="padding:8px 14px;cursor:pointer;">Sync</button>
+            <button id="startBtn" style="padding:8px 14px;cursor:pointer;">Start</button>
+            <button id="stopBtn" style="padding:8px 14px;cursor:pointer;">Pause</button>
+            <button id="repeatBtn" style="padding:8px 14px;cursor:pointer;">Repeat: Off</button>
+            <button id="speed25Btn" style="padding:8px 14px;cursor:pointer;">25%</button>
+            <button id="speed50Btn" style="padding:8px 14px;cursor:pointer;">50%</button>
+            <button id="speed75Btn" style="padding:8px 14px;cursor:pointer;">75%</button>
+            <button id="speed100Btn" style="padding:8px 14px;cursor:pointer;">100%</button>
+        </div>
 
-            <div style=\"display:grid;grid-template-columns:1fr 1fr;gap:10px;\">
-                <div>
-                    <div style=\"font:600 13px sans-serif;margin-bottom:4px;\">Left Output</div>
-                    <video id=\"leftVideo\" width=\"100%\" preload=\"metadata\" playsinline>
-                        <source src=\"data:video/mp4;base64,{left_b64}\" type=\"video/mp4\" />
-                    </video>
-                </div>
-                <div>
-                    <div style=\"font:600 13px sans-serif;margin-bottom:4px;\">Right Output</div>
-                    <video id=\"rightVideo\" width=\"100%\" preload=\"metadata\" playsinline>
-                        <source src=\"data:video/mp4;base64,{right_b64}\" type=\"video/mp4\" />
-                    </video>
-                </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+            <div>
+                <div style="font:600 13px sans-serif;margin-bottom:4px;">Left Output</div>
+                <video id="leftVideo" style="width:100%;height:auto;display:block;" preload="metadata" playsinline>
+                    <source src="data:video/mp4;base64,{left_b64}" type="video/mp4" />
+                </video>
             </div>
+            <div>
+                <div style="font:600 13px sans-serif;margin-bottom:4px;">Right Output</div>
+                <video id="rightVideo" style="width:100%;height:auto;display:block;" preload="metadata" playsinline>
+                    <source src="data:video/mp4;base64,{right_b64}" type="video/mp4" />
+                </video>
             </div>
-            components.html(html, height=680, scrolling=False)
+        </div>
+    </div>
 
-        <script>
-            const left = document.getElementById('leftVideo');
-            const right = document.getElementById('rightVideo');
-            const syncBtn = document.getElementById('syncBtn');
-            const startBtn = document.getElementById('startBtn');
-            const stopBtn = document.getElementById('stopBtn');
-            const repeatBtn = document.getElementById('repeatBtn');
-            const speed25Btn = document.getElementById('speed25Btn');
-            const speed50Btn = document.getElementById('speed50Btn');
-            const speed75Btn = document.getElementById('speed75Btn');
-            const speed100Btn = document.getElementById('speed100Btn');
-            let repeatEnabled = false;
+    <script>
+        const left = document.getElementById('leftVideo');
+        const right = document.getElementById('rightVideo');
+        const syncBtn = document.getElementById('syncBtn');
+        const startBtn = document.getElementById('startBtn');
+        const stopBtn = document.getElementById('stopBtn');
+        const repeatBtn = document.getElementById('repeatBtn');
+        const speed25Btn = document.getElementById('speed25Btn');
+        const speed50Btn = document.getElementById('speed50Btn');
+        const speed75Btn = document.getElementById('speed75Btn');
+        const speed100Btn = document.getElementById('speed100Btn');
+        let repeatEnabled = false;
 
-            function syncOnce() {{
-                if (!Number.isFinite(left.currentTime) || !Number.isFinite(right.currentTime)) return;
-                const t = Math.min(left.currentTime, right.currentTime);
-                left.currentTime = t;
-                right.currentTime = t;
-            }}
+        function setFrameHeight() {{
+            const h = Math.max(document.body.scrollHeight, document.documentElement.scrollHeight);
+            window.parent.postMessage({{
+                isStreamlitMessage: true,
+                type: 'streamlit:setFrameHeight',
+                height: h
+            }}, '*');
+        }}
 
-            function playBoth() {{
-                syncOnce();
-                left.play();
-                right.play();
-            }}
+        function syncOnce() {{
+            if (!Number.isFinite(left.currentTime) || !Number.isFinite(right.currentTime)) return;
+            const t = Math.min(left.currentTime, right.currentTime);
+            left.currentTime = t;
+            right.currentTime = t;
+        }}
 
-            function restartBoth() {{
-                left.currentTime = 0;
-                right.currentTime = 0;
-                left.play();
-                right.play();
-                stopBtn.textContent = 'Pause';
-            }}
+        function playBoth() {{
+            syncOnce();
+            left.play();
+            right.play();
+        }}
 
-            function stopBoth() {{
-                left.pause();
-                right.pause();
-                stopBtn.textContent = 'Continue';
-            }}
+        function restartBoth() {{
+            left.currentTime = 0;
+            right.currentTime = 0;
+            left.play();
+            right.play();
+            stopBtn.textContent = 'Pause';
+        }}
 
-            function togglePauseContinue() {{
-                if (left.paused && right.paused) {{
-                    playBoth();
-                    stopBtn.textContent = 'Pause';
-                    return;
-                }}
-                stopBoth();
-            }}
+        function stopBoth() {{
+            left.pause();
+            right.pause();
+            stopBtn.textContent = 'Continue';
+        }}
 
-            function setSpeed(rate) {{
-                left.playbackRate = rate;
-                right.playbackRate = rate;
-            }}
-
-            syncBtn.addEventListener('click', syncOnce);
-            startBtn.addEventListener('click', restartBoth);
-            stopBtn.addEventListener('click', togglePauseContinue);
-            repeatBtn.addEventListener('click', () => {{
-                repeatEnabled = !repeatEnabled;
-                repeatBtn.textContent = repeatEnabled ? 'Repeat: On' : 'Repeat: Off';
-            }});
-            speed25Btn.addEventListener('click', () => setSpeed(0.25));
-            speed50Btn.addEventListener('click', () => setSpeed(0.5));
-            speed75Btn.addEventListener('click', () => setSpeed(0.75));
-            speed100Btn.addEventListener('click', () => setSpeed(1.0));
-
-            function onVideoEnded() {{
-                if (!repeatEnabled) return;
-                left.currentTime = 0;
-                right.currentTime = 0;
+        function togglePauseContinue() {{
+            if (left.paused && right.paused) {{
                 playBoth();
                 stopBtn.textContent = 'Pause';
+                return;
             }}
+            stopBoth();
+        }}
 
-            left.addEventListener('ended', onVideoEnded);
-            right.addEventListener('ended', onVideoEnded);
+        function setSpeed(rate) {{
+            left.playbackRate = rate;
+            right.playbackRate = rate;
+        }}
 
-            setInterval(() => {{
-                if (left.paused || right.paused) return;
-                const drift = Math.abs(left.currentTime - right.currentTime);
-                if (drift > 0.08) {{
-                    syncOnce();
-                }}
-            }}, 300);
-        </script>
-        """
+        syncBtn.addEventListener('click', syncOnce);
+        startBtn.addEventListener('click', restartBoth);
+        stopBtn.addEventListener('click', togglePauseContinue);
+        repeatBtn.addEventListener('click', () => {{
+            repeatEnabled = !repeatEnabled;
+            repeatBtn.textContent = repeatEnabled ? 'Repeat: On' : 'Repeat: Off';
+        }});
+        speed25Btn.addEventListener('click', () => setSpeed(0.25));
+        speed50Btn.addEventListener('click', () => setSpeed(0.5));
+        speed75Btn.addEventListener('click', () => setSpeed(0.75));
+        speed100Btn.addEventListener('click', () => setSpeed(1.0));
 
-        components.html(html, height=520, scrolling=False)
+        function onVideoEnded() {{
+            if (!repeatEnabled) return;
+            left.currentTime = 0;
+            right.currentTime = 0;
+            playBoth();
+            stopBtn.textContent = 'Pause';
+        }}
+
+        left.addEventListener('ended', onVideoEnded);
+        right.addEventListener('ended', onVideoEnded);
+        left.addEventListener('loadedmetadata', setFrameHeight);
+        right.addEventListener('loadedmetadata', setFrameHeight);
+        window.addEventListener('resize', setFrameHeight);
+        setTimeout(setFrameHeight, 50);
+
+        setInterval(() => {{
+            if (left.paused || right.paused) return;
+            const drift = Math.abs(left.currentTime - right.currentTime);
+            if (drift > 0.08) {{
+                syncOnce();
+            }}
+        }}, 300);
+    </script>
+    """
+
+    components.html(html, height=900, scrolling=False)
 
 
 if "compare_ready" not in st.session_state:
